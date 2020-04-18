@@ -10,8 +10,8 @@ from tqdm import tqdm
 
 class WikiDumpParser(object):
     def __init__(self, filename):
-        # xml_file = BZ2File(filename)
-        xml_file = filename
+        xml_file = BZ2File(filename)
+        # xml_file = filename
         self.context = etree.iterparse(xml_file)
         self.important_tags = ["id", "timestamp", "comment", "text", "title"]
 
