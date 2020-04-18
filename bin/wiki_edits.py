@@ -78,7 +78,7 @@ def main():
                     minor=meta["minor"],
                     comment=meta["comment"].encode("utf-8")
                     if "comment" in meta and meta["comment"] is not None
-                    else "none".encode("utf-8")
+                    else "none".encode("utf-8"),
                     pid=meta["page"]["id"],
                     ratio=scores[0],
                     dist=scores[1],
