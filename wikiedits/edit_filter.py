@@ -7,46 +7,54 @@ import Levenshtein
 import math
 
 import logging
+
 log = logging.getLogger(__name__)
+
+from ipdb import set_trace
 
 
 class EditFilter(object):
+    def __init__(
+        self,
+        lang="english",
+        min_words=3,
+        max_words=120,
+        length_diff=4,
+        edit_ratio=0.3,
+        min_chars=10,
+    ):
 
-    def __init__(self,
-                 lang='english',
-                 min_words=3,
-                 max_words=120,
-                 length_diff=4,
-                 edit_ratio=0.3,
-                 min_chars=10):
-
-        self.segmenter = nltk.data.load('tokenizers/punkt/%s.pickle' % lang)
+        self.segmenter = nltk.data.load("tokenizers/punkt/%s.pickle" % lang)
 
         self.LEVENSHTEIN_RATIO_LOG_BASE = 20
 
-        self.MIN_TEXT_LENGTH = min_chars                # in characters
-        self.MIN_WORDS_IN_SENTENCE = min_words          # in words
-        self.MAX_WORDS_IN_SENTENCE = max_words          # in words
-        self.MAX_LENGTH_DIFF = length_diff              # on words
-        self.MAX_LEVENSHTEIN_RATIO = edit_ratio         # on words
+        self.MIN_TEXT_LENGTH = min_chars  # in characters
+        self.MIN_WORDS_IN_SENTENCE = min_words  # in words
+        self.MAX_WORDS_IN_SENTENCE = max_words  # in words
+        self.MAX_LENGTH_DIFF = length_diff  # on words
+        self.MAX_LEVENSHTEIN_RATIO = edit_ratio  # on words
 
     def filter_edits(self, old_text, new_text):
         log.debug("processing texts:\n  >>> %s\n  >>> %s", old_text, new_text)
         if not self.__looks_like_text_edition(old_text, new_text):
             return []
 
+        # ctxt = old_text.split(".")
         edits = []
-        for old_sent, new_sent in self.__sentence_pairs(old_text, new_text):
+        for i, (old_sent, new_sent) in enumerate(
+            self.__sentence_pairs(old_text, new_text)
+        ):
+            prev_ctxt = ""  # ctxt[:i]
+            next_ctxt = ""  # ctxt[i + 1 :]
             old_sent = old_sent.strip()
             new_sent = new_sent.strip()
 
-            log.info("processing sentences:\n  > %s\n  > %s",
-                old_sent, new_sent)
+            log.info("processing sentences:\n  > %s\n  > %s", old_sent, new_sent)
 
             scores = self.__looks_like_sentence_edition(old_sent, new_sent)
             if not scores:
                 continue
-            edits.append((old_sent, new_sent, scores))
+            edits.append((old_sent, new_sent, scores, prev_ctxt, next_ctxt))
 
         log.info("got %i edited sentence(s)", len(edits))
         return edits
@@ -60,8 +68,7 @@ class EditFilter(object):
             log.debug("texts are equal")
             return False
 
-        if len(old_text) < self.MIN_TEXT_LENGTH \
-                or len(new_text) < self.MIN_TEXT_LENGTH:
+        if len(old_text) < self.MIN_TEXT_LENGTH or len(new_text) < self.MIN_TEXT_LENGTH:
             log.debug("either old or new text fragment is too short")
             return False
 
@@ -74,7 +81,7 @@ class EditFilter(object):
 
         # the number of words in a sentence is obtained by counting the number
         # of spaces plus one
-        counts = [old_sent.count(' ') + 1, new_sent.count(' ') + 1]
+        counts = [old_sent.count(" ") + 1, new_sent.count(" ") + 1]
         diff = abs(counts[0] - counts[1])
 
         if diff > self.MAX_LENGTH_DIFF:
@@ -103,13 +110,12 @@ class EditFilter(object):
 
         min_size = min(len(old_sents), len(new_sents))
         for idx in range(min_size):
-            yield (' '.join(old_sents[idx].split()),
-                   ' '.join(new_sents[idx].split()))
+            yield (" ".join(old_sents[idx].split()), " ".join(new_sents[idx].split()))
 
     def __segmentize(self, text):
-        return [frag
-                for sent in self.segmenter.tokenize(text)
-                for frag in sent.split('; ')]
+        return [
+            frag for sent in self.segmenter.tokenize(text) for frag in sent.split("; ")
+        ]
 
     def __levenshtein_ratio(self, old_sent, new_sent):
         old_words = old_sent.split()
@@ -117,18 +123,21 @@ class EditFilter(object):
 
         min_words = min(len(old_words), len(new_words))
         dist = self.__levenshtein_on_words(old_words, new_words)
-        ratio = dist / float(min_words) * math.log(min_words,
-            self.LEVENSHTEIN_RATIO_LOG_BASE)
+        ratio = (
+            dist
+            / float(min_words)
+            * math.log(min_words, self.LEVENSHTEIN_RATIO_LOG_BASE)
+        )
 
         return (ratio, dist)
 
     def __levenshtein_on_words(self, words1, words2):
-        char = 32   # 32 + 33 = 'A'
+        char = 32  # 32 + 33 = 'A'
         word_map = {}
         for word in set(words1 + words2):
             word_map[word] = chr((char % 93) + 33)
             char += 1
 
-        list1 = ''.join([word_map[word] for word in words1])
-        list2 = ''.join([word_map[word] for word in words2])
+        list1 = "".join([word_map[word] for word in words1])
+        list2 = "".join([word_map[word] for word in words2])
         return Levenshtein.distance(list1, list2)

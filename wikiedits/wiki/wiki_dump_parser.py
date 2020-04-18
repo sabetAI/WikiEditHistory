@@ -2,12 +2,18 @@
 
 from lxml import etree
 import sys
+from bz2file import BZ2File
+
+from ipdb import set_trace
+from tqdm import tqdm
+
 
 class WikiDumpParser(object):
-
     def __init__(self, filename):
-        self.context = etree.iterparse(filename)
-        self.important_tags = ['id', 'timestamp', 'comment', 'text', 'title']
+        # xml_file = BZ2File(filename)
+        xml_file = filename
+        self.context = etree.iterparse(xml_file)
+        self.important_tags = ["id", "timestamp", "comment", "text", "title"]
 
     def page_iter(self):
         pass
@@ -15,33 +21,37 @@ class WikiDumpParser(object):
     def rev_iter(self):
         revision, page, contributor = {}, {}, {}
 
-        for elem in self.__fast_iter():
+        for elem in tqdm(self.__fast_iter()):
             tag = self.__extract_tag(elem)
+            if tag == "minor":
+                revision["minor"] = "T"
 
-            if tag == 'id':
-                if 'id' not in page: # page id
-                    page['id'] = elem.text
-                elif 'id' not in revision: # revision id
-                    revision['id'] = elem.text
-                else: # user id
-                    contributor['id'] = elem.text
+            if tag == "id":
+                if "id" not in page:  # page id
+                    page["id"] = elem.text
+                elif "id" not in revision:  # revision id
+                    revision["id"] = elem.text
+                else:  # user id
+                    contributor["id"] = elem.text
 
-            elif tag in ['username', 'ip']:
+            elif tag in ["username", "ip"]:
                 contributor[tag] = elem.text
 
-            elif tag == 'contributor':
-                revision['contributor'] = contributor
+            elif tag == "contributor":
+                revision["contributor"] = contributor
 
-            elif tag == 'revision':
-                revision['page'] = page
+            elif tag == "revision":
+                revision["page"] = page
+                if "minor" not in revision:
+                    revision["minor"] = "F"
                 yield revision
                 revision = {}
                 contributor = {}
 
-            elif tag == 'title':
-                page['title'] = elem.text
+            elif tag == "title":
+                page["title"] = elem.text
 
-            elif tag == 'page':
+            elif tag == "page":
                 page = {}
                 revision = {}
                 contributor = {}
@@ -56,17 +66,16 @@ class WikiDumpParser(object):
         """
         try:
             for event, elem in self.context:
-                if event == 'end':
+                if event == "end":
                     yield elem
 
                 elem.clear()
                 while elem.getprevious() is not None:
                     del elem.getparent()[0]
         except etree.LxmlError as ex:
-            print >>sys.stderr, "Iteration stopped due to lxml exception: {}" \
-                .format(ex)
+            print >>sys.stderr, "Iteration stopped due to lxml exception: {}".format(ex)
         finally:
             del self.context
 
     def __extract_tag(self, elem):
-        return elem.tag.rsplit('}', 1)[-1]
+        return elem.tag.rsplit("}", 1)[-1]
