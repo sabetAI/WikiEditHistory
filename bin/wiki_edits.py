@@ -72,7 +72,9 @@ def main():
                     timestamp=meta["timestamp"],
                     uid=meta["contributor"]["id"]
                     if "id" in meta["contributor"]
-                    else meta["contributor"]["ip"],
+                    else meta["contributor"]["ip"]
+                    if "ip" in meta["contributor"]
+                    else "",
                     minor=meta["minor"],
                     comment=meta["comment"].encode("utf-8")
                     if "comment" in meta
