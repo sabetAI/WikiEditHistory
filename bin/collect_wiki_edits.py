@@ -74,7 +74,7 @@ def process_dump_file(file, work_dir, options):
 
 
 def debug(msg):
-    print >> sys.stderr, msg
+    print() sys.stderr, msg)
 
 def parse_user_args():
     parser = argparse.ArgumentParser(
