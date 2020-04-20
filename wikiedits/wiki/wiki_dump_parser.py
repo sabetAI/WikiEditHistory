@@ -12,7 +12,7 @@ class WikiDumpParser(object):
     def __init__(self, filename):
         xml_file = BZ2File(filename)
         # xml_file = filename
-        self.context = etree.iterparse(xml_file)
+        self.context = etree.iterparse(xml_file, huge_tree=True)
         self.important_tags = ["id", "timestamp", "comment", "text", "title"]
 
     def page_iter(self):
