@@ -23,7 +23,6 @@ from tqdm import tqdm
 
 import re
 from html.entities import name2codepoint
-from transformers import BertTokenizer
 
 
 def htmlentitydecode(s):
