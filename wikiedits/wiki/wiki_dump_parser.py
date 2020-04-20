@@ -7,8 +7,6 @@ from bz2file import BZ2File
 from ipdb import set_trace
 from tqdm import tqdm
 
-from transformers import BertTokenizer
-
 
 class WikiDumpParser(object):
     def __init__(self, filename):
