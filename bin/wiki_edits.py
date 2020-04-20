@@ -23,6 +23,7 @@ from tqdm import tqdm
 
 import re
 from html.entities import name2codepoint
+from transformers import BertTokenizer
 
 
 def htmlentitydecode(s):
@@ -76,21 +77,12 @@ def main():
         #     out.write(format_meta_data(meta) + "\n")
 
         for (old_edit, new_edit, scores, prev_ctxt, next_ctxt) in edits:
-            print(prev_ctxt)
             prev_ctxt = "<SEP>".join(
                 [htmlentitydecode(c) for c in prev_ctxt if c != ""]
             ).encode("utf-8")
-            print(prev_ctxt)
-            set_trace()
-            nexr_ctxt = "<SEP>".join(
+            next_ctxt = "<SEP>".join(
                 [htmlentitydecode(c) for c in next_ctxt if c != ""]
             ).encode("utf-8")
-            # entry = {
-            #     "old_edit": old_edit,  # .encode("utf-8"),
-            #     "new_edit": new_edit,  # .encode("utf-8"),
-            #     **meta,
-            # }
-            # json.dump(entry, out)
             out.write(
                 output.format(
                     old=htmlentitydecode(old_edit).encode("utf-8"),

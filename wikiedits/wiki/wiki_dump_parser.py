@@ -7,11 +7,13 @@ from bz2file import BZ2File
 from ipdb import set_trace
 from tqdm import tqdm
 
+from transformers import BertTokenizer
+
 
 class WikiDumpParser(object):
     def __init__(self, filename):
-        # xml_file = B2File(filename)
-        xml_file = filename
+        xml_file = B2File(filename)
+        # xml_file = filename
         self.context = etree.iterparse(xml_file)
         self.important_tags = ["id", "timestamp", "comment", "text", "title"]
 
