@@ -7,7 +7,6 @@ import argparse
 import logging
 import yaml
 import json
-import html2text
 
 # it may be required if you have installed NLTK locally
 # import nltk.data
@@ -67,9 +66,6 @@ def main():
     out.write(
         "old\tnew\tprev_ctxt\tnext_ctxt\trid\ttimestamp\tuid\tminor\tcomment\tpid\tratio\tdist\n"
     )
-    html2txt = html2text.HTML2Text()
-    html2txt.ignore_links = True
-    html2txt.body_width = 0
 
     for edits, meta in tqdm(wiki.extract_edits()):
         # if args.meta_data and edits:
