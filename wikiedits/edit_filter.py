@@ -39,13 +39,13 @@ class EditFilter(object):
         if not self.__looks_like_text_edition(old_text, new_text):
             return []
 
-        # ctxt = old_text.split(".")
+        ctxt = old_text.split(".")
         edits = []
         for i, (old_sent, new_sent) in enumerate(
             self.__sentence_pairs(old_text, new_text)
         ):
-            prev_ctxt = ""  # ctxt[:i]
-            next_ctxt = ""  # ctxt[i + 1 :]
+            prev_ctxt = ctxt[:i]
+            next_ctxt = ctxt[i + 1 :]
             old_sent = old_sent.strip()
             new_sent = new_sent.strip()
 

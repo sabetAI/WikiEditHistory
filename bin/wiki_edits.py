@@ -7,6 +7,7 @@ import argparse
 import logging
 import yaml
 import json
+import html2text
 
 # it may be required if you have installed NLTK locally
 # import nltk.data
@@ -19,6 +20,18 @@ from wikiedits import LANGUAGES
 
 from ipdb import set_trace
 from tqdm import tqdm
+
+import re
+from html.entities import name2codepoint
+
+
+def htmlentitydecode(s):
+    decoded = re.sub(
+        "&(%s);" % "|".join(name2codepoint),
+        lambda m: chr(name2codepoint[m.group(1)]),
+        s,
+    )
+    return re.sub(r"^https?:\/\/.*[\r\n]*", "", decoded)
 
 
 def main():
@@ -37,7 +50,7 @@ def main():
     )
 
     if args.tabify:
-        output = "{old}\t{new}\t{rid}\t{timestamp}\t{uid}\t{minor}\t{comment}\t{pid}\n"
+        output = "{old}\t{new}\t{prev_ctxt}\t{next_ctxt}\t{rid}\t{timestamp}\t{uid}\t{minor}\t{comment}\t{pid}\t{ratio}\t{dist}\n"
         if args.scores:
             output += "\t{dist}\t{ratio}\n"
     elif args.context:
@@ -51,13 +64,27 @@ def main():
     if args.output != sys.stdout:
         out = open(args.output, "w")
 
-    out.write("old\tnew\trid\ttimestamp\tuid\tminor\tcomment\tpid\n")
+    out.write(
+        "old\tnew\tprev_ctxt\tnext_ctxt\trid\ttimestamp\tuid\tminor\tcomment\tpid\tratio\tdist\n"
+    )
+    html2txt = html2text.HTML2Text()
+    html2txt.ignore_links = True
+    html2txt.body_width = 0
 
     for edits, meta in tqdm(wiki.extract_edits()):
         # if args.meta_data and edits:
         #     out.write(format_meta_data(meta) + "\n")
 
         for (old_edit, new_edit, scores, prev_ctxt, next_ctxt) in edits:
+            print(prev_ctxt)
+            prev_ctxt = "<SEP>".join(
+                [htmlentitydecode(c) for c in prev_ctxt if c != ""]
+            ).encode("utf-8")
+            print(prev_ctxt)
+            set_trace()
+            nexr_ctxt = "<SEP>".join(
+                [htmlentitydecode(c) for c in next_ctxt if c != ""]
+            ).encode("utf-8")
             # entry = {
             #     "old_edit": old_edit,  # .encode("utf-8"),
             #     "new_edit": new_edit,  # .encode("utf-8"),
@@ -66,8 +93,10 @@ def main():
             # json.dump(entry, out)
             out.write(
                 output.format(
-                    old=old_edit.encode("utf-8"),
-                    new=new_edit.encode("utf-8"),
+                    old=htmlentitydecode(old_edit).encode("utf-8"),
+                    new=htmlentitydecode(new_edit).encode("utf-8"),
+                    prev_ctxt=prev_ctxt,
+                    next_ctxt=next_ctxt,
                     rid=meta["id"],
                     timestamp=meta["timestamp"],
                     uid=meta["contributor"]["id"]
