@@ -60,24 +60,38 @@ def main():
             output = "### scores: {{dist: {dist}, ratio: {ratio}}}\n" + output
 
     out = args.output
+    start_idx = 0
+    if args.resume:
+        with open(args.output, 'r', encoding='utf8') as fp:
+            start_idx = sum([1 for line in fp])
     if args.output != sys.stdout:
-        out = open(args.output, "wb")
+        set_trace()
+        out = open(args.output, "a", encoding='utf8')
 
-    out.write(
-        "old\tnew\tprev_ctxt\tnext_ctxt\trid\ttimestamp\tuid\tminor\tcomment\tpid\tratio\tdist\n"
-    )
+    if not args.resume:
+        out.write(
+            "old\tnew\tprev_ctxt\tnext_ctxt\trid\ttimestamp\tuid\tminor\tcomment\tpid\tratio\tdist\n"
+        )
 
+    curr_idx = 0
     for edits, meta in tqdm(wiki.extract_edits()):
+        if curr_idx < start_idx:
+            curr_idx += 1
+            continue
         # if args.meta_data and edits:
         #     out.write(format_meta_data(meta) + "\n")
 
         for (old_edit, new_edit, scores, prev_ctxt, next_ctxt) in edits:
-            prev_ctxt = " <SEP>".join(
+            prev_ctxt = " <<SEP>> ".join(
                 [htmlentitydecode(c) for c in prev_ctxt if c != ""]
             )
-            next_ctxt = " <SEP>".join(
+            if prev_ctxt == '':
+                prev_ctxt = 'none'
+            next_ctxt = " <<SEP>> ".join(
                 [htmlentitydecode(c) for c in next_ctxt if c != ""]
             )
+            if next_ctxt == '':
+                next_ctxt = 'none'
             out.write(
                 output.format(
                     old=htmlentitydecode(old_edit),
@@ -100,6 +114,7 @@ def main():
                     dist=scores[1],
                 )
             )
+            curr_idx += 1
 
     if args.output != sys.stdout:
         out.close()
@@ -136,6 +151,11 @@ def parse_user_args():
         action="store_true",
         default=True,
         help="add revision meta data like comment, user, etc.",
+    )
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="resume from end of output file"
     )
     parser.add_argument(
         "-t",
