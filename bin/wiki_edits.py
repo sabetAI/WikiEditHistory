@@ -61,7 +61,7 @@ def main():
 
     out = args.output
     if args.output != sys.stdout:
-        out = open(args.output, "w")
+        out = open(args.output, "wb")
 
     out.write(
         "old\tnew\tprev_ctxt\tnext_ctxt\trid\ttimestamp\tuid\tminor\tcomment\tpid\tratio\tdist\n"
@@ -74,14 +74,14 @@ def main():
         for (old_edit, new_edit, scores, prev_ctxt, next_ctxt) in edits:
             prev_ctxt = "<SEP>".join(
                 [htmlentitydecode(c) for c in prev_ctxt if c != ""]
-            ).encode("utf-8")
+            )
             next_ctxt = "<SEP>".join(
                 [htmlentitydecode(c) for c in next_ctxt if c != ""]
-            ).encode("utf-8")
+            )
             out.write(
                 output.format(
-                    old=htmlentitydecode(old_edit).encode("utf-8"),
-                    new=htmlentitydecode(new_edit).encode("utf-8"),
+                    old=htmlentitydecode(old_edit),
+                    new=htmlentitydecode(new_edit),
                     prev_ctxt=prev_ctxt,
                     next_ctxt=next_ctxt,
                     rid=meta["id"],
@@ -92,9 +92,9 @@ def main():
                     if "ip" in meta["contributor"]
                     else "",
                     minor=meta["minor"],
-                    comment=meta["comment"].encode("utf-8")
+                    comment=meta["comment"]
                     if "comment" in meta and meta["comment"] is not None
-                    else "none".encode("utf-8"),
+                    else "none",
                     pid=meta["page"]["id"],
                     ratio=scores[0],
                     dist=scores[1],
@@ -134,12 +134,14 @@ def parse_user_args():
         "-m",
         "--meta-data",
         action="store_true",
+        default=True,
         help="add revision meta data like comment, user, etc.",
     )
     parser.add_argument(
         "-t",
         "--tabify",
         action="store_true",
+        default=True,
         help="print output in OLD_EDIT-TAB-NEW_EDIT format",
     )
     parser.add_argument("-c", "--context", action="store_true", help="include context")
@@ -168,7 +170,7 @@ def parse_user_args():
     group.add_argument(
         "--min-words",
         type=int,
-        default=2,
+        default=3,
         help="set minimum length of sentence in words",
     )
     group.add_argument(
@@ -180,13 +182,13 @@ def parse_user_args():
     group.add_argument(
         "--length-diff",
         type=int,
-        default=4,
+        default=10000,
         help="set maximum difference in length between " "edited sentences",
     )
     group.add_argument(
         "--edit-ratio",
         type=float,
-        default=0.3,
+        default=0.6,
         help="set maximum relative difference in edit " "distance",
     )
 
