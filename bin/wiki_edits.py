@@ -65,7 +65,6 @@ def main():
         with open(args.output, 'r', encoding='utf8') as fp:
             start_idx = sum([1 for line in fp])
     if args.output != sys.stdout:
-        set_trace()
         out = open(args.output, "a", encoding='utf8')
 
     if not args.resume:
