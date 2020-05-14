@@ -72,10 +72,10 @@ def main():
         #     out.write(format_meta_data(meta) + "\n")
 
         for (old_edit, new_edit, scores, prev_ctxt, next_ctxt) in edits:
-            prev_ctxt = "<SEP>".join(
+            prev_ctxt = " <SEP>".join(
                 [htmlentitydecode(c) for c in prev_ctxt if c != ""]
             )
-            next_ctxt = "<SEP>".join(
+            next_ctxt = " <SEP>".join(
                 [htmlentitydecode(c) for c in next_ctxt if c != ""]
             )
             out.write(
